@@ -1,5 +1,20 @@
-{
-  "severity": "ERROR",
-  "textPayload": "KeyError: 'DATABASE_URL' not found in environment. Process exited with code 1",
-  "resource": {"labels": {"service_name": "payment-api"}}
-}
+[
+  {
+    "timestamp": "2026-01-10T17:00:00Z",
+    "severity": "ERROR",
+    "message": "Auth failed for user 'root' with password 'Admin@2026_Secure' at IP 192.168.1.50",
+    "service": "auth-service"
+  },
+  {
+    "timestamp": "2026-01-10T17:05:00Z",
+    "severity": "CRITICAL",
+    "message": "Bucket access denied. Attempted with GOOGLE_APPLICATION_CREDENTIALS='AIzaSyA_Example_Key_9876'",
+    "service": "storage-handler"
+  },
+  {
+    "timestamp": "2026-01-10T17:10:00Z",
+    "severity": "ERROR",
+    "message": "Connection string leaked: postgres://admin:Pass123!@10.0.0.4:5432/production_db",
+    "service": "db-connector"
+  }
+]

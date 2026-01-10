@@ -1,4 +1,18 @@
-google-generativeai
-pydantic
-python-dotenv
+# Web Framework and Server
+fastapi
+uvicorn
+
+# AI and Machine Learning (Unified SDK)
+google-genai
+
+# Google Cloud Observability and Management
+google-cloud-logging
+google-cloud-run
+google-auth-oauthlib
+
+# Backend and Real-time Dashboard
 firebase-admin
+
+# Utilities
+python-dotenv
+requests
