@@ -1,25 +1,18 @@
-<<<<<<< HEAD
 # Web Framework and Server
 fastapi
 uvicorn
 
-# AI and Machine Learning (Unified SDK)
-google-genai
+# Gemini via Vertex AI (OFFICIAL & SUPPORTED)
+google-cloud-aiplatform
 
-# Google Cloud Observability and Management
+# Google Cloud Observability
 google-cloud-logging
-google-cloud-run
-google-auth-oauthlib
+google-auth
 
-# Backend and Real-time Dashboard
+# Backend Services
 firebase-admin
 
 # Utilities
 python-dotenv
 requests
-=======
-google-generativeai
 pydantic
-python-dotenv
-firebase-admin
->>>>>>> c390916490281795dd24c95a3810f14d6287396c
