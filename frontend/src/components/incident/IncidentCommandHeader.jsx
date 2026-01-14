@@ -7,7 +7,7 @@ const IncidentCommandHeader = ({ group }) => {
     const isActive = group.status === 'OPEN';
 
     return (
-        <div className="sticky top-0 z-40 bg-obsidian/95 backdrop-blur-md border-b border-white/10 shadow-2xl transition-all duration-300">
+        <div className="fixed top-16 left-64 right-0 z-30 bg-obsidian/95 backdrop-blur-md border-b border-white/10 shadow-2xl transition-all duration-300">
             {/* Top Bar: Nav & High-level Status */}
             <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
                 <button
@@ -22,8 +22,8 @@ const IncidentCommandHeader = ({ group }) => {
                 <div className="flex items-center gap-3">
                     <span className="text-xs text-gray-500 uppercase tracking-widest font-mono">Incident ID: {group.id}</span>
                     <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border ${isActive
-                            ? 'bg-alert-red/10 text-alert-red border-alert-red/20 animate-pulse'
-                            : 'bg-success-green/10 text-success-green border-success-green/20'
+                        ? 'bg-alert-red/10 text-alert-red border-alert-red/20 animate-pulse'
+                        : 'bg-success-green/10 text-success-green border-success-green/20'
                         }`}>
                         {isActive ? 'Active Incident' : 'Resolved'}
                     </span>
@@ -43,26 +43,12 @@ const IncidentCommandHeader = ({ group }) => {
                     </div>
                 </div>
 
-                {/* Impact Metrics (Col 8-10) */}
-                <div className="lg:col-span-3 flex justify-around items-center border-l border-white/10 pl-6">
-                    <div className="text-center group cursor-help">
-                        <div className="text-xs text-gray-500 uppercase font-mono mb-1">Impacted Users</div>
-                        <div className="text-xl font-bold text-gray-200 group-hover:text-electric-blue transition-colors">~240</div>
+                {/* AI Confidence & Zone Data (Col 8-12) */}
+                <div className="lg:col-span-5 flex justify-end items-center border-l border-white/10 pl-6 gap-8">
+                    <div className="flex flex-col items-center justify-center">
+                        <ConfidenceRing score={group.root_cause?.confidence || 0} size={60} />
+                        <span className="text-[10px] text-gray-500 uppercase font-mono mt-2 tracking-wide text-center">AI Certainty</span>
                     </div>
-                    <div className="text-center group cursor-help">
-                        <div className="text-xs text-gray-500 uppercase font-mono mb-1">Est. Revenue</div>
-                        <div className="text-xl font-bold text-gray-200 group-hover:text-alert-red transition-colors">$1.2k</div>
-                    </div>
-                    <div className="text-center group cursor-help">
-                        <div className="text-xs text-gray-500 uppercase font-mono mb-1">SLA Breach</div>
-                        <div className="text-xl font-bold text-success-green group-hover:text-yellow-400 transition-colors">No</div>
-                    </div>
-                </div>
-
-                {/* AI Confidence (Col 11-12) */}
-                <div className="lg:col-span-2 flex flex-col items-center justify-center border-l border-white/10 pl-6">
-                    <ConfidenceRing score={group.root_cause?.confidence || 0} size={60} />
-                    <span className="text-[10px] text-gray-500 uppercase font-mono mt-2 tracking-wide">AI Certainty</span>
                 </div>
             </div>
 

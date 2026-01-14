@@ -18,14 +18,8 @@ const SecureLogViewer = ({ logs = [] }) => {
         }
     };
 
-    // Mock logs if empty
-    const displayLogs = logs.length > 0 ? logs : [
-        { level: 'INFO', msg: 'Initiating db connection pool' },
-        { level: 'DEBUG', msg: 'Connection string parsed' },
-        { level: 'ERROR', msg: 'Auth failed for user: admin@corp.com' },
-        { level: 'SECRET', msg: 'API_KEY="sk_live_9384...7583"' },
-        { level: 'INFO', msg: 'Retry attempt 1 of 5' },
-    ];
+    // Use logs from props
+    const displayLogs = logs;
 
     return (
         <div className="bg-black/40 rounded-lg border border-white/10 font-mono text-xs overflow-hidden relative">
@@ -38,33 +32,37 @@ const SecureLogViewer = ({ logs = [] }) => {
             </div>
 
             <div className="p-4 space-y-1 relative">
-                {displayLogs.map((log, idx) => (
-                    <div key={idx} className="flex gap-3">
-                        <span className={`w-12 ${log.level === 'ERROR' ? 'text-alert-red' : (log.level === 'SECRET' ? 'text-electric-blue' : 'text-gray-500')}`}>
-                            [{log.level}]
-                        </span>
-                        <span className="text-gray-300">
-                            {log.level === 'SECRET' && !decrypted ? (
-                                <span className="relative inline-block cursor-help group">
-                                    <span className="filter blur-[4px] select-none bg-white/10 px-1 rounded">
-                                        REDACTED_SECRET_VALUE
+                {displayLogs.length === 0 ? (
+                    <div className="text-gray-600 italic">No associated logs found for this trace.</div>
+                ) : (
+                    displayLogs.map((log, idx) => (
+                        <div key={idx} className="flex gap-3">
+                            <span className={`w-16 shrink-0 ${log.severity === 'ERROR' || log.severity === 'CRITICAL' ? 'text-alert-red' : (log.severity === 'WARNING' ? 'text-yellow-500' : 'text-gray-500')}`}>
+                                [{log.severity || 'INFO'}]
+                            </span>
+                            <span className="text-gray-300">
+                                {log.severity === 'SECRET' && !decrypted ? (
+                                    <span className="relative inline-block cursor-help group">
+                                        <span className="filter blur-[4px] select-none bg-white/10 px-1 rounded">
+                                            REDACTED_SECRET_VALUE
+                                        </span>
+                                        <span className="absolute -top-1 -right-4 text-electric-blue">
+                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
+                                        </span>
+                                        {/* Tooltip */}
+                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-gray-900 border border-white/10 p-2 rounded w-48 text-center text-[10px] text-gray-400 z-10">
+                                            Redacted by Gemini to prevent secret exposure
+                                        </span>
                                     </span>
-                                    <span className="absolute -top-1 -right-4 text-electric-blue">
-                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                        </svg>
-                                    </span>
-                                    {/* Tooltip */}
-                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-gray-900 border border-white/10 p-2 rounded w-48 text-center text-[10px] text-gray-400 z-10">
-                                        Redacted by Gemini to prevent secret exposure
-                                    </span>
-                                </span>
-                            ) : (
-                                log.msg
-                            )}
-                        </span>
-                    </div>
-                ))}
+                                ) : (
+                                    log.message || log.msg
+                                )}
+                            </span>
+                        </div>
+                    ))
+                )}
             </div>
 
             {/* Decrypt Action - Only show if not decrypted */}

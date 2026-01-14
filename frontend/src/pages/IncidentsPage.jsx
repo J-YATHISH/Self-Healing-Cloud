@@ -44,31 +44,7 @@ const IncidentsPage = () => {
 
             } catch (err) {
                 console.error("Failed to load error groups", err);
-
-                if (import.meta.env.DEV) {
-                    // Fallback mock data that fits the Canvas Card schema
-                    const mockGroups = Array(10).fill(null).map((_, i) => ({
-                        id: `GRP-${Date.now()}-${i}`,
-                        name: `PaymentService: ConnectionTimeoutException`,
-                        root_cause: {
-                            cause: "High latency in downstream AuthProvider detected.",
-                            confidence: 0.85 - (i * 0.05)
-                        },
-                        severity: i % 3 === 0 ? 'CRITICAL' : (i % 2 === 0 ? 'HIGH' : 'MEDIUM'),
-                        status: i % 4 === 0 ? 'RESOLVED' : 'OPEN',
-                        count: 40 + (i * 12),
-                        last_seen: new Date().toISOString(),
-                        services: ['PaymentService', 'AuthGateway'],
-                        route: '/api/v1/checkout/finalize'
-                    }));
-
-                    // Client side filter logic for mock
-                    let filtered = mockGroups;
-                    if (filters.severity !== 'ALL') filtered = filtered.filter(i => i.severity === filters.severity);
-                    if (filters.status !== 'ALL') filtered = filtered.filter(i => i.status === filters.status);
-
-                    setGroups(filtered);
-                }
+                setGroups([]);
             } finally {
                 setLoading(false);
             }

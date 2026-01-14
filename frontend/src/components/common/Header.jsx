@@ -54,7 +54,7 @@ const Header = ({ onSecurityClick }) => {
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-8 bg-electric-blue rounded-full shadow-[0_0_10px_#00D1FF]"></div>
                     <h2 className="text-xl font-bold text-gray-100 tracking-tight hidden md:block">
-                        Cloud RCA <span className="text-electric-blue font-mono font-normal text-sm">CMD_CTR</span>
+                        Cloud RCA <span className="text-electric-blue font-mono font-normal text-sm"></span>
                     </h2>
                 </div>
             </div>

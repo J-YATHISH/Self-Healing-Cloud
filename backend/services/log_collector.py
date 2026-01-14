@@ -7,8 +7,9 @@ from collections import defaultdict
 from google.cloud import logging_v2
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-PROJECT_ID = "project-e2bcb697-e160-439a-a3c"
-SERVICE_NAME = "cloud-rca-service"
+# Default values (can be overridden)
+DEFAULT_PROJECT_ID = "project-e2bcb697-e160-439a-a3c"
+DEFAULT_SERVICE_NAME = "cloud-rca-service"
 
 SCOPES = [
     "https://www.googleapis.com/auth/logging.read",
@@ -19,10 +20,18 @@ SCOPES = [
 DATA_DIR = "data"
 
 
+# OAuth authentication is now handled by credential_manager.py
+# This function is kept for backward compatibility but should not be used
 def authenticate():
-    """OAuth authentication for user credentials"""
+    """DEPRECATED: OAuth authentication for user credentials
+    
+    Use credential_manager.get_credentials() instead.
+    This function is kept only for standalone testing.
+    """
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    key_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "client_secret.json")
     flow = InstalledAppFlow.from_client_secrets_file(
-        "client_secret.json",
+        key_path,
         scopes=SCOPES,
     )
     return flow.run_local_server(port=0)
@@ -72,13 +81,15 @@ def parse_log_entry(entry):
     }
 
 
-def save_logs_to_json(traces, filename=None):
+def save_logs_to_json(traces, filename=None, project_id=None, service_name=None):
     """
     Save logs to JSON file in data/ folder
     
     Args:
         traces: Dictionary of traces with logs
         filename: Custom filename (optional). If None, generates timestamp-based name
+        project_id: Project ID for metadata
+        service_name: Service name for metadata
     
     Returns:
         Path to saved file
@@ -120,8 +131,8 @@ def save_logs_to_json(traces, filename=None):
     
     output_data = {
         "fetch_time": datetime.now().isoformat(),
-        "project_id": PROJECT_ID,
-        "service_name": SERVICE_NAME,
+        "project_id": project_id or DEFAULT_PROJECT_ID,
+        "service_name": service_name or DEFAULT_SERVICE_NAME,
         "total_traces": len(traces),
         "total_logs": sum(len(logs) for logs in traces.values()),
         "traces": traces_with_metadata
@@ -135,20 +146,34 @@ def save_logs_to_json(traces, filename=None):
     return filepath
 
 
-def fetch_logs(creds, time_range_minutes=60, save_to_file=True, filename=None):
+def fetch_logs(credentials, time_range_minutes=60, save_to_file=True, filename=None, project_id=None, service_name=None):
     """
     Fetch logs from Cloud Run for given time range
     
     Args:
-        creds: OAuth credentials
+        credentials: Google OAuth2 Credentials object (from credential_manager)
         time_range_minutes: How many minutes back to fetch logs
         save_to_file: Whether to save logs to JSON file (default: True)
         filename: Custom filename for saving (optional)
+        project_id: GCP Project ID (uses default if not provided)
+        service_name: Service name to filter logs (uses default if not provided)
     
     Returns:
         Dictionary of log entries grouped by trace_id
     """
-    client = logging_v2.Client(project=PROJECT_ID, credentials=creds)
+    # Use provided project_id or default
+    project = project_id or DEFAULT_PROJECT_ID
+    service = service_name or DEFAULT_SERVICE_NAME
+    
+    print(f"🔍 Initializing Logging Client - Project: {project}, Service: {service}")
+    if credentials:
+        print(f"🔑 Auth Token present: {bool(credentials.token)}")
+    
+    try:
+        client = logging_v2.Client(project=project, credentials=credentials)
+    except Exception as e:
+        print(f"❌ Failed to initialize logging client: {e}")
+        raise
     
     # Time filter for recent logs
     start_time = datetime.utcnow() - timedelta(minutes=time_range_minutes)
@@ -156,9 +181,9 @@ def fetch_logs(creds, time_range_minutes=60, save_to_file=True, filename=None):
     
     log_filter = f'''
         resource.type="cloud_run_revision"
-        resource.labels.service_name="{SERVICE_NAME}"
-        (logName="projects/{PROJECT_ID}/logs/run.googleapis.com%2Fstderr"
-         OR logName="projects/{PROJECT_ID}/logs/run.googleapis.com%2Fstdout")
+        resource.labels.service_name="{service}"
+        (logName="projects/{project}/logs/run.googleapis.com%2Fstderr"
+         OR logName="projects/{project}/logs/run.googleapis.com%2Fstdout")
         {timestamp_filter}
     '''
     
@@ -190,7 +215,7 @@ def fetch_logs(creds, time_range_minutes=60, save_to_file=True, filename=None):
     
     # Save to file if requested
     if save_to_file:
-        save_logs_to_json(traces_dict, filename)
+        save_logs_to_json(traces_dict, filename, project_id=project, service_name=service)
     
     return traces_dict
 

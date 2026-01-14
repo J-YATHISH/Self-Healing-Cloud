@@ -41,7 +41,7 @@ const DeepDivePanel = ({ isOpen, onClose, group }) => {
                             </div>
                             <div className="flex gap-3">
                                 <div className="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-white flex items-center justify-center text-xs font-bold">3</div>
-                                <p className="text-sm text-gray-300">Confidence is high ({(group.root_cause?.confidence * 100).toFixed(0)}%) due to exact stack trace match with previous incidents.</p>
+                                <p className="text-sm text-gray-300">Confidence is high ({group.root_cause?.confidence}%) due to exact stack trace match with previous incidents.</p>
                             </div>
                         </div>
                     </section>

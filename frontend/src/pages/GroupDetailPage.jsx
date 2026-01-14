@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { groupsAPI, incidentsAPI } from '../services/api';
-// import ErrorGroupCard from '../components/cards/ErrorGroupCard'; // Replaced by Header
-// import PlaybookViewer from '../components/visuals/PlaybookViewer'; // Integrated into Canvas
-// import IncidentTimeline from '../components/visuals/IncidentTimeline'; // Integrated into Canvas
 import IncidentCommandHeader from '../components/incident/IncidentCommandHeader';
 import InvestigationCanvas from '../components/incident/InvestigationCanvas';
 import ActionControlPanel from '../components/incident/ActionControlPanel';
@@ -29,40 +26,13 @@ const GroupDetailPage = () => {
                 setGroup(groupRes.data);
 
                 // Fetch incidents
+                // In a real scenario we might want to paginate or limit this
                 const incidentsRes = await incidentsAPI.list({ group_id: id, limit: 20 });
                 setIncidents(incidentsRes.data);
 
             } catch (err) {
                 console.error("Failed to load group details", err);
-                if (import.meta.env.DEV) {
-                    // Mock group for dev
-                    setGroup({
-                        id: id || "GRP-2941",
-                        name: "Payment Gateway Latency Spike",
-                        severity: "CRITICAL",
-                        status: "OPEN",
-                        summary: "Connection refused from 192.168.1.10 over port 5432.",
-                        count: 42,
-                        first_seen: new Date(Date.now() - 172800000).toISOString(),
-                        root_cause: {
-                            cause: "Upstream API Timeout (Stripe)",
-                            confidence: 0.95,
-                            evidence: ["TimeoutError: 3000ms exceeded", "Connection reset by peer"]
-                        }
-                    });
-
-                    // Mock incidents
-                    setIncidents([
-                        ...Array(10).fill().map((_, i) => ({
-                            id: `INC-${i}`,
-                            created_at: new Date(Date.now() - (i * 1000 * 60 * 15)).toISOString(),
-                            status: 'OPEN'
-                        }))
-                    ]);
-
-                } else {
-                    setError("Failed to load group details. It may not exist.");
-                }
+                setError("Failed to load group details. Please ensure the backend is running.");
             } finally {
                 setLoading(false);
             }
@@ -97,7 +67,7 @@ const GroupDetailPage = () => {
     );
 
     return (
-        <div className="min-h-screen bg-obsidian pb-32"> {/* pb-32 for sticky footer space */}
+        <div className="min-h-screen bg-obsidian pb-32 pt-[140px]"> {/* pb-32 for sticky footer, pt-[140px] for fixed header */}
 
             {/* Zone 1: Situation Awareness */}
             <IncidentCommandHeader group={group} />

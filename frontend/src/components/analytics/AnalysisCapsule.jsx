@@ -22,12 +22,14 @@ const AnalysisCapsule = ({ title, subtitle, insight, children, type = 'default' 
             </div>
 
             {/* Body: The Chart */}
-            <div className="flex-1 p-5 min-h-[300px] relative">
+            <div className="flex-1 relative min-h-[200px] w-full">
                 {/* Subtle Grid Background */}
                 <div className="absolute inset-0 opacity-10 pointer-events-none"
                     style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
                 </div>
-                {children}
+                <div className="absolute inset-4">
+                    {children}
+                </div>
             </div>
 
             {/* Footer: AI Insight */}

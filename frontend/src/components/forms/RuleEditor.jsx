@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 const RuleEditor = ({ rule, onSave, onCancel, isSaving }) => {
     const [formData, setFormData] = useState({
         name: '',
-        threshold: 10,
-        window_minutes: 5,
-        severity: 'MEDIUM',
+        category: 'Database',
+        threshold: 5,
+        window_minutes: 15,
+        severity: 'HIGH',
         enabled: true
     });
 
@@ -13,9 +14,10 @@ const RuleEditor = ({ rule, onSave, onCancel, isSaving }) => {
         if (rule) {
             setFormData({
                 name: rule.name || '',
-                threshold: rule.threshold || 10,
-                window_minutes: rule.window_minutes || 5,
-                severity: rule.severity || 'MEDIUM',
+                category: rule.category || 'Database',
+                threshold: rule.threshold || 5,
+                window_minutes: rule.window_minutes || 15,
+                severity: rule.severity || 'HIGH',
                 enabled: rule.enabled !== undefined ? rule.enabled : true
             });
         }
@@ -38,42 +40,63 @@ const RuleEditor = ({ rule, onSave, onCancel, isSaving }) => {
         });
     };
 
+    const inputClasses = "mt-1 block w-full bg-black/60 border border-white/20 rounded-xl text-white font-medium py-3 px-4 focus:ring-2 focus:ring-electric-blue focus:border-transparent outline-none transition-all placeholder:text-gray-600";
+    const labelClasses = "block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-1";
+
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-                <label className="block text-sm font-medium text-gray-700">Rule Name</label>
+                <label className={labelClasses}>Descriptive Name</label>
                 <input
                     type="text"
                     name="name"
                     required
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    className={inputClasses}
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="e.g., High Error Spike"
+                    placeholder="e.g., PostgreSQL Latency Spike Warning"
                 />
+            </div>
+
+            <div>
+                <label className={labelClasses}>Trigger Category</label>
+                <select
+                    name="category"
+                    className={inputClasses}
+                    value={formData.category}
+                    onChange={handleChange}
+                >
+                    <option value="Database">Database & Storage</option>
+                    <option value="Network">Network & CDN</option>
+                    <option value="Security">Security & IAM</option>
+                    <option value="Compute">Compute & Clusters</option>
+                    <option value="Application">Application Logic</option>
+                    <option value="API">API Gateway</option>
+                </select>
+                <p className="mt-1.5 text-[10px] text-gray-500 italic">Emails will trigger when AI identifies logs matching this category.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Threshold (Events)</label>
+                    <label className={labelClasses}>Error Count Threshold</label>
                     <input
                         type="number"
                         name="threshold"
                         required
                         min="1"
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className={inputClasses}
                         value={formData.threshold}
                         onChange={handleChange}
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Window (Minutes)</label>
+                    <label className={labelClasses}>Time Window (min)</label>
                     <input
                         type="number"
                         name="window_minutes"
                         required
                         min="1"
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className={inputClasses}
                         value={formData.window_minutes}
                         onChange={handleChange}
                     />
@@ -81,48 +104,52 @@ const RuleEditor = ({ rule, onSave, onCancel, isSaving }) => {
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700">Severity</label>
-                <select
-                    name="severity"
-                    className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    value={formData.severity}
-                    onChange={handleChange}
-                >
-                    <option value="CRITICAL">CRITICAL</option>
-                    <option value="HIGH">HIGH</option>
-                    <option value="MEDIUM">MEDIUM</option>
-                    <option value="LOW">LOW</option>
-                </select>
+                <label className={labelClasses}>Criticality Level</label>
+                <div className="grid grid-cols-4 gap-2">
+                    {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((s) => (
+                        <button
+                            key={s}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, severity: s })}
+                            className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${formData.severity === s
+                                    ? 'bg-electric-blue/20 border-electric-blue text-electric-blue'
+                                    : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/30'
+                                }`}
+                        >
+                            {s}
+                        </button>
+                    ))}
+                </div>
             </div>
 
-            <div className="flex items-center">
+            <div className="flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/10">
                 <input
                     id="enabled"
                     name="enabled"
                     type="checkbox"
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    className="h-5 w-5 bg-black border-white/20 rounded text-electric-blue focus:ring-electric-blue"
                     checked={formData.enabled}
                     onChange={handleChange}
                 />
-                <label htmlFor="enabled" className="ml-2 block text-sm text-gray-900">
-                    Rule Enabled
+                <label htmlFor="enabled" className="text-sm font-bold text-gray-300 pointer-events-none">
+                    Enable Continuous Monitoring
                 </label>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t">
+            <div className="flex justify-end gap-3 pt-6 border-t border-white/10">
                 <button
                     type="button"
                     onClick={onCancel}
-                    className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="px-6 py-2.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all"
                 >
-                    Cancel
+                    Discard Changes
                 </button>
                 <button
                     type="submit"
                     disabled={isSaving}
-                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    className="px-6 py-2.5 bg-electric-blue text-black rounded-xl text-xs font-black tracking-widest hover:bg-white hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                 >
-                    {isSaving ? 'Saving...' : 'Save Rule'}
+                    {isSaving ? 'SYNCING...' : 'SAVE CONFIGURATION'}
                 </button>
             </div>
         </form>

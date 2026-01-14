@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 
 // Pages
 import AuthPage from './pages/AuthPage';
+import AuthCallbackPage from './pages/AuthCallbackPage';
 import DashboardPage from './pages/DashboardPage';
 import IncidentsPage from './pages/IncidentsPage';
 import GroupDetailPage from './pages/GroupDetailPage';
@@ -16,8 +17,9 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* Public Route */}
+        {/* Public Routes */}
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/auth/success" element={<AuthCallbackPage />} />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>

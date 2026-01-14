@@ -24,15 +24,7 @@ const AlertRulesPage = () => {
             setRules(response.data);
         } catch (err) {
             console.error("Failed to load rules", err);
-            if (import.meta.env.DEV) {
-                // Mock Data
-                setRules([
-                    { id: 1, name: 'Critical Error Spike', threshold: 50, window_minutes: 5, severity: 'CRITICAL', enabled: true },
-                    { id: 2, name: 'Sustained High Latency', threshold: 200, window_minutes: 15, severity: 'HIGH', enabled: false },
-                    { id: 3, name: 'Database Connection Drops', threshold: 5, window_minutes: 1, severity: 'CRITICAL', enabled: true },
-                    { id: 4, name: 'Frontend 404 Burst', threshold: 100, window_minutes: 10, severity: 'MEDIUM', enabled: true },
-                ]);
-            }
+            setRules([]);
         } finally {
             setLoading(false);
         }
@@ -63,7 +55,7 @@ const AlertRulesPage = () => {
             addToast(`Policy '${rule.name}' ${rule.enabled ? 'paused' : 'activated'}`, 'info');
         } catch (err) {
             console.error("Failed to toggle rule", err);
-            if (!import.meta.env.DEV) fetchRules();
+            fetchRules(); // Reload from backend
             addToast('Failed to update policy status', 'error');
         }
     };
@@ -80,24 +72,27 @@ const AlertRulesPage = () => {
         }, 1500);
     };
 
+    const handleDelete = async (id) => {
+        try {
+            await alertsAPI.delete(id);
+            setRules(rules.filter(r => r.id !== id));
+            addToast('Alert rule deleted successfully', 'info');
+        } catch (err) {
+            console.error("Failed to delete rule", err);
+            addToast('Failed to delete alert rule', 'error');
+        }
+    };
+
     const handleSave = async (formData) => {
         setIsSaving(true);
         try {
             if (editingRule) {
-                if (import.meta.env.DEV) {
-                    setRules(prev => prev.map(r => r.id === editingRule.id ? { ...r, ...formData } : r));
-                } else {
-                    await alertsAPI.update(editingRule.id, formData);
-                    await fetchRules();
-                }
+                await alertsAPI.update(editingRule.id, formData);
+                await fetchRules();
                 addToast('Policy configuration updated', 'success');
             } else {
-                if (import.meta.env.DEV) {
-                    setRules(prev => [...prev, { id: Date.now(), ...formData }]);
-                } else {
-                    await alertsAPI.create(formData);
-                    await fetchRules();
-                }
+                await alertsAPI.create(formData);
+                await fetchRules();
                 addToast('New automation policy defined', 'success');
             }
             setIsEditorOpen(false);
@@ -115,8 +110,8 @@ const AlertRulesPage = () => {
             <div>
                 <div className="sm:flex sm:items-end sm:justify-between mb-6 border-b border-white/10 pb-5">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-100 tracking-tight">Autonomy Control</h1>
-                        <p className="mt-2 text-sm text-gray-400 font-mono">Manage automation safeguards and response policies.</p>
+                        <h1 className="text-3xl font-bold text-gray-100 tracking-tight">Alert Configuration</h1>
+                        <p className="mt-2 text-sm text-gray-400 font-mono">Define thresholds and categories for automated Gmail notifications.</p>
                     </div>
                     <div className="mt-4 sm:mt-0">
                         <button
@@ -126,24 +121,21 @@ const AlertRulesPage = () => {
                             <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
-                            Define Policy
+                            Create Alert Rule
                         </button>
                     </div>
                 </div>
-
-                {/* Autonomy Stats Strip */}
-                <AutonomyStats />
             </div>
 
             {loading ? (
                 <LoadingSpinner size="lg" className="min-h-[400px]" />
             ) : rules.length === 0 ? (
                 <EmptyState
-                    title="No Policies Defined"
-                    description="System is currently operating in manual mode. Define a policy to enable autonomy."
+                    title="No Alert Rules"
+                    description="Monitoring is active, but no custom alert thresholds are defined. Create a rule to receive notifications."
                     action={
                         <button onClick={handleCreate} className="mt-4 text-electric-blue font-bold hover:text-white transition-colors">
-                            Define Activation Policy &rarr;
+                            Define Alert Threshold &rarr;
                         </button>
                     }
                 />
@@ -156,32 +148,24 @@ const AlertRulesPage = () => {
                             onEdit={handleEdit}
                             onToggle={handleToggle}
                             onTest={handleTestPolicy}
+                            onDelete={handleDelete}
                         />
                     ))}
                 </div>
             )}
 
-            {/* Editor Modal - (Using existing form logic, wrapped in dark modal) */}
+            {/* Editor Modal */}
             {isEditorOpen && (
                 <div className="fixed inset-0 z-[60] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
                     <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity" onClick={() => setIsEditorOpen(false)}></div>
-
                         <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
                         <div className="inline-block align-bottom bg-obsidian border border-white/10 rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                             <div className="px-6 pt-6 pb-4">
                                 <h3 className="text-xl leading-6 font-bold text-gray-100 mb-6 border-b border-white/10 pb-4" id="modal-title">
-                                    {editingRule ? 'Configure Policy' : 'New Automation Policy'}
+                                    {editingRule ? 'Configure Alert Rule' : 'New Configuration'}
                                 </h3>
-                                {/* 
-                                    Note: RuleEditor is still using default tailwind styles (likely white bg fields). 
-                                    In a full refactor, RuleEditor would also need a dark mode pass to match perfectly.
-                                    For now, it renders inside this dark container.
-                                */}
-                                <div className="bg-gray-100 rounded-lg p-2 filter invert hue-rotate-180 brightness-90">
-                                    {/* Quick hack to invert the light-mode editor for dark mode without rewriting it solely for this demo task */}
-                                    {/* Real app would refactor RuleEditor.jsx */}
+                                <div className="p-2">
                                     <RuleEditor
                                         rule={editingRule}
                                         onSave={handleSave}
@@ -189,8 +173,8 @@ const AlertRulesPage = () => {
                                         isSaving={isSaving}
                                     />
                                 </div>
-                                <p className="mt-2 text-xs text-center text-gray-500 font-mono">
-                                    * Editor styles inverted for compatibility
+                                <p className="mt-4 text-[10px] text-center text-gray-500 font-mono uppercase tracking-widest">
+                                    Secure Configuration Layer
                                 </p>
                             </div>
                         </div>

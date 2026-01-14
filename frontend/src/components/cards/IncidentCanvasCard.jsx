@@ -17,7 +17,7 @@ const IncidentCanvasCard = ({ group }) => {
         route = '/api/unknown'
     } = group;
 
-    const confidence = root_cause.confidence ? Math.round(root_cause.confidence * 100) : 0;
+    const confidence = root_cause.confidence ? (root_cause.confidence <= 1 ? Math.round(root_cause.confidence * 100) : Math.round(root_cause.confidence)) : 0;
     const canRollback = confidence >= 70;
 
     return (
@@ -97,18 +97,23 @@ const IncidentCanvasCard = ({ group }) => {
                 </button>
 
                 {expanded && (
-                    <div className="mt-2 bg-black/40 rounded p-3 font-mono text-xs text-gray-400 overflow-x-auto border border-white/5">
-                        <div className="flex gap-2 mb-1 text-gray-600">
-                            <span className="text-alert-red">[ERROR]</span>
-                            <span>Request failed with status 500</span>
-                        </div>
-                        <div className="pl-4 text-gray-500">
-                            at /app/services/checkout.ts:42:15 <br />
-                            at processTicksAndRejections (node:internal/process/task_queues:96:5)
-                        </div>
-                        <div className="mt-2 text-electric-blue/60 italic">
-                            [PII REDACTED] [PII REDACTED]
-                        </div>
+                    <div className="mt-2 bg-black/40 rounded p-3 font-mono text-xs text-gray-400 overflow-x-auto border border-white/5 space-y-2">
+                        {(group.logs || []).slice(0, 3).map((log, lidx) => (
+                            <div key={lidx} className="border-b border-white/5 pb-2 last:border-0">
+                                <div className="flex gap-2 mb-1">
+                                    <span className={log.severity === 'ERROR' ? 'text-alert-red' : 'text-gray-500'}>
+                                        [{log.severity || 'INFO'}]
+                                    </span>
+                                    <span className="text-gray-300">{log.message || log.msg}</span>
+                                </div>
+                                <div className="pl-4 text-[10px] text-gray-600 italic">
+                                    {log.timestamp} • {log.service}
+                                </div>
+                            </div>
+                        ))}
+                        {(!group.logs || group.logs.length === 0) && (
+                            <div className="text-gray-600 italic">No sample logs available for this trace.</div>
+                        )}
                     </div>
                 )}
             </div>

@@ -5,9 +5,16 @@ import { authAPI } from '../services/api';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const AuthPage = () => {
-    const { login } = useAuth();
+    const { user, login } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+
+    // Redirect if already authenticated
+    React.useEffect(() => {
+        if (user) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [user, navigate]);
 
     // Get redirect location or default to dashboard
     const from = location.state?.from?.pathname || "/dashboard";
@@ -17,8 +24,6 @@ const AuthPage = () => {
     const [error, setError] = useState(null);
 
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
         projectId: ''
     });
 
@@ -34,31 +39,9 @@ const AuthPage = () => {
 
     const handleSetup = async (e) => {
         e.preventDefault();
-        setIsLoading(true);
-        setError(null);
 
-        try {
-            // Step 1: Validate Project ID / Setup
-            await authAPI.setup({
-                name: formData.name,
-                email: formData.email,
-                project_id: formData.projectId
-            });
-
-            // Move to Step 2 on success
-            setStep(2);
-        } catch (err) {
-            console.error("Setup failed:", err);
-            // Fallback for dev/demo if backend is offline or returns 404
-            if (import.meta.env.DEV) {
-                console.warn("Dev mode: Proceeding to step 2 despite API error");
-                setStep(2);
-            } else {
-                setError(err.response?.data?.detail || "Failed to validate project. Please check your Project ID.");
-            }
-        } finally {
-            setIsLoading(false);
-        }
+        // No validation needed, just proceed to OAuth
+        setStep(2);
     };
 
     const handleLogin = async () => {
@@ -66,34 +49,18 @@ const AuthPage = () => {
         setError(null);
 
         try {
-            // Step 2: Connect OAuth / Login
-            const response = await authAPI.login({
-                email: formData.email,
-                project_id: formData.projectId
-            });
+            // Store project_id in sessionStorage for OAuth callback
+            sessionStorage.setItem('oauth_project_id', formData.projectId);
 
-            const { token, user } = response.data;
-            login(token, user);
-            navigate(from, { replace: true });
+            // Get OAuth authorization URL from backend
+            const response = await authAPI.googleAuthorize(formData.projectId);
+            const { authorization_url } = response.data;
 
+            // Redirect to Google OAuth consent screen
+            window.location.href = authorization_url;
         } catch (err) {
-            console.error("Login failed:", err);
-
-            // Fallback for dev/demo
-            if (import.meta.env.DEV) {
-                console.warn("Dev mode: Simulating successful login");
-                const mockToken = "mock_token_" + Date.now();
-                const mockUser = {
-                    name: formData.name || 'Demo User',
-                    email: formData.email || 'demo@example.com',
-                    projectId: formData.projectId || 'demo-project'
-                };
-                login(mockToken, mockUser);
-                navigate(from, { replace: true });
-            } else {
-                setError("Failed to connect GCP account. Please try again.");
-            }
-        } finally {
+            console.error("OAuth initiation failed:", err);
+            setError("Failed to connect to Google. Please try again.");
             setIsLoading(false);
         }
     };
@@ -124,40 +91,6 @@ const AuthPage = () => {
                     {step === 1 && (
                         <form className="space-y-6" onSubmit={handleSetup}>
                             <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                                    Full Name
-                                </label>
-                                <div className="mt-1">
-                                    <input
-                                        id="name"
-                                        name="name"
-                                        type="text"
-                                        required
-                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                    Email address
-                                </label>
-                                <div className="mt-1">
-                                    <input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        required
-                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
                                 <label htmlFor="projectId" className="block text-sm font-medium text-gray-700">
                                     GCP Project ID
                                 </label>
@@ -167,23 +100,23 @@ const AuthPage = () => {
                                         name="projectId"
                                         type="text"
                                         required
+                                        placeholder="my-gcp-project-id"
                                         className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                         value={formData.projectId}
                                         onChange={handleChange}
                                     />
                                 </div>
                                 <p className="mt-2 text-xs text-gray-500">
-                                    We need your project ID to connect to Cloud Logging services.
+                                    Enter your GCP Project ID to connect to Cloud Logging.
                                 </p>
                             </div>
 
                             <div>
                                 <button
                                     type="submit"
-                                    disabled={isLoading}
-                                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                                 >
-                                    {isLoading ? <LoadingSpinner size="sm" className="text-white" /> : "Validate Project ID"}
+                                    Continue
                                 </button>
                             </div>
                         </form>
@@ -197,9 +130,9 @@ const AuthPage = () => {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
-                                <h3 className="text-lg leading-6 font-medium text-gray-900">Project Validated</h3>
+                                <h3 className="text-lg leading-6 font-medium text-gray-900">Ready to Connect</h3>
                                 <p className="mt-2 text-sm text-gray-500">
-                                    Project <strong>{formData.projectId}</strong> is ready to connect.
+                                    Project <strong>{formData.projectId}</strong> will be linked to your Google account.
                                 </p>
                             </div>
 
@@ -210,9 +143,9 @@ const AuthPage = () => {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                     </div>
-                                    <div className="ml-3 flex-1 md:flex md:justify-between">
+                                    <div className="ml-3 flex-1">
                                         <p className="text-sm text-blue-700">
-                                            We require <strong>Logs Reader</strong> permission to analyze your incidents. Access is read-only.
+                                            You'll be redirected to Google to sign in. We'll automatically get your name and email from your Google account.
                                         </p>
                                     </div>
                                 </div>

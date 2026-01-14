@@ -1,0 +1,63 @@
+# Self-Healing Cloud: AI-Driven SRE Mission Control
+
+> [!NOTE]
+> **Live Demo**: [Insert Deployed Link Here]
+
+## 🌪️ The Problem
+In modern cloud native environments, SREs (Site Reliability Engineers) are overwhelmed by "log noise." Identifying the root cause of an incident typically requires manually searching through thousands of multi-service traces, correlating disjointed logs, and guessing the remediation steps. This leads to high **MTTR (Mean Time To Recovery)** and system downtime.
+
+## 🛡️ The Solution: Self-Healing Cloud
+**Self-Healing Cloud** is a Next-Gen SRE Command Center that transforms raw logs into actionable intelligence. By integrating **Gemini AI** directly into the GCP logging pipeline, it provides an autonomous diagnostic layer that identifies, explains, and suggests fixes for anomalies before they escalate.
+
+---
+
+## 🚀 Highlighted Features
+
+- **Mission Control Dashboard**: A high-fidelity, real-time command center with dynamic System Health scores and AI Confidence metrics.
+- **Reliability Chatbot**: A Gemini-powered assistant with context on the last 50+ incidents. Ask it deep questions about system behavior or remediation steps.
+- **Neural Risk Distribution**: A scatter-plot visualization that correlates incident impact with AI confidence, enabling priority-based triage.
+- **AI Deep Scan Engine**: Manually or automatically trigger parallel Gemini analyses across thousands of traces to find hidden anomalies.
+- **Autonomy Control Layer**: Define and manage automation policies that trigger Slack/Email alerts or autonomous remediation when specific anomaly categories are detected.
+- **Investigation Canvas**: A detailed view for every incident showing redacted trace summaries, correlation insights, and recommended actions.
+
+---
+
+## 🛠️ Local Setup
+
+### Prerequisites
+- Python 3.9+
+- Node.js (v18+)
+- Google Cloud Project with Logging API enabled
+- Gemini API Key (Google AI Studio)
+
+### Backend Configuration
+1. Navigate to the `backend/` folder.
+2. Create a `.env` file from the following template:
+   ```env
+   GEMINI_API_KEY=your_gemini_key
+   CREDENTIAL_ENCRYPTION_KEY=your_fernet_key
+   GMAIL_USER=your_email
+   GMAIL_APP_PASSWORD=your_app_password
+   ```
+3. Place your `serviceAccountKey.json` and `client_secret.json` in the `backend/` root.
+4. Install dependencies: `pip install -r requirements.txt`.
+5. Start the server: `python api.py`.
+
+### Frontend Configuration
+1. Navigate to the `frontend/` folder.
+2. Install dependencies: `npm install`.
+3. Start the dev server: `npm run dev`.
+4. Open `http://localhost:5173`.
+
+---
+
+## 🏗️ Architecture
+- **Frontend**: React, Vite, Tailwind CSS, Recharts, Framer Motion.
+- **Backend**: FastAPI (Python), Asynchronous Firestore REST client.
+- **Intelligence**: Gemini-3 Flash (Generative AI).
+- **Communication**: Asynchronous Email (aiosmtplib).
+
+---
+
+## 🤝 Contributing
+Contributions are welcome! Please ensure you have configured your development environment with the necessary GCP permissions.

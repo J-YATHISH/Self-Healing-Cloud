@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../common/ToastProvider';
+import { chatAPI } from '../../services/api';
 
 const AIChatWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        { id: 1, sender: 'agent', text: 'Hello! I\'m your Reliability Agent. Ask me anything about system health or incidents.' }
+        { id: 1, sender: 'agent', text: 'Hello! I\'m your Reliability Chatbot. Ask me about system status, past incidents, or for remediation suggestions.' }
     ]);
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
@@ -43,33 +44,18 @@ const AIChatWidget = () => {
         setInputValue('');
         setIsTyping(true);
 
-        // Simulate AI Thinking
-        setTimeout(() => {
-            let replyText = "I'm analyzing the telemetry data...";
-            let type = 'info';
-
-            // Simple keyword logic for demo
-            const lowerInput = userMsg.text.toLowerCase();
-            if (lowerInput.includes('failed') || lowerInput.includes('fail')) {
-                replyText = "I've detected multiple timeouts in `payment-api`. I can fetch the logs for you.";
-            } else if (lowerInput.includes('why')) {
-                replyText = "Correlation analysis suggests a recent config change in `auth-service` is causing downstream latency.";
-            } else if (lowerInput.includes('heal') || lowerInput.includes('fix')) {
-                replyText = "I can attempt to rollback `payment-api` to v2.3. Would you like me to proceed?";
-                // Trigger a toast for effect
-                setTimeout(() => addToast('Simulating: Rollback initiated for payment-api', 'warning'), 1000);
-            } else if (lowerInput.includes('status')) {
-                replyText = "System is running at 99.98% uptime. 0 active critical alerts.";
-                type = 'success';
-            }
-
-            const agentMsg = { id: Date.now() + 1, sender: 'agent', text: replyText };
-            setMessages(prev => [...prev, agentMsg]);
+        try {
+            const response = await chatAPI.send(userMsg.text);
+            const chatbotMsg = { id: Date.now() + 1, sender: 'agent', text: response.data.reply };
+            setMessages(prev => [...prev, chatbotMsg]);
+        } catch (err) {
+            console.error("Chat Error:", err);
+            const errorMsg = { id: Date.now() + 1, sender: 'agent', text: "I'm sorry, I'm having trouble responding right now. Please try again soon." };
+            setMessages(prev => [...prev, errorMsg]);
+            addToast('Chat connection failed', 'error');
+        } finally {
             setIsTyping(false);
-
-            if (type === 'success') addToast('AI Analysis Complete', 'success');
-
-        }, 1500);
+        }
     };
 
     return (
@@ -78,7 +64,7 @@ const AIChatWidget = () => {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`fixed bottom-6 right-6 lg:right-10 w-14 h-14 bg-electric-blue rounded-full shadow-[0_0_20px_rgba(0,209,255,0.4)] flex items-center justify-center z-50 text-white transition-transform hover:scale-110 ${isOpen ? 'rotate-90 scale-0 opacity-0' : 'scale-100 opacity-100'}`}
-                title="Ask AI Agent (Cmd+K)"
+                title="Ask Reliability Chatbot (Cmd+K)"
             >
                 <svg className="w-8 h-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -92,7 +78,7 @@ const AIChatWidget = () => {
                     <div className="h-14 bg-black/40 border-b border-white/10 flex items-center justify-between px-4">
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-success-green animate-pulse"></div>
-                            <span className="font-bold text-gray-100">AI Reliability Agent</span>
+                            <span className="font-bold text-gray-100">Reliability Chatbot</span>
                         </div>
                         <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white transform transition-colors">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -105,9 +91,9 @@ const AIChatWidget = () => {
                     <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-black/20">
                         {messages.map(msg => (
                             <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${msg.sender === 'user'
-                                        ? 'bg-electric-blue text-black font-medium rounded-tr-none'
-                                        : 'bg-white/10 text-gray-200 border border-white/5 rounded-tl-none'
+                                <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap ${msg.sender === 'user'
+                                    ? 'bg-electric-blue text-black font-medium rounded-tr-none'
+                                    : 'bg-white/10 text-gray-200 border border-white/5 rounded-tl-none'
                                     }`}>
                                     {msg.text}
                                 </div>
@@ -147,7 +133,7 @@ const AIChatWidget = () => {
                             </button>
                         </div>
                         <div className="text-[10px] text-gray-600 text-center mt-2 font-mono">
-                            Press ⌘K to open • AI can take autonomous actions
+                            Press ⌘K to open • Reliability Chatbot
                         </div>
                     </form>
                 </div>

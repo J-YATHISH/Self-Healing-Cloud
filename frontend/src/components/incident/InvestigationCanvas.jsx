@@ -18,7 +18,7 @@ const InvestigationCanvas = ({ group, incidents }) => {
                         </svg>
                         Temporal Pattern
                     </h3>
-                    <div className="h-32">
+                    <div className="max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                         <IncidentTimeline incidents={incidents} />
                     </div>
                     <p className="text-xs text-gray-500 mt-4 text-center italic">
@@ -72,12 +72,13 @@ const InvestigationCanvas = ({ group, incidents }) => {
 
                     {selectedTab === 'reasoning' && (
                         <div className="space-y-8 animate-fade-in">
+                            {/* Gemini Analysis Steps */}
                             <div className="flex items-start gap-4">
                                 <div className="w-8 h-8 rounded-full bg-electric-blue/20 flex items-center justify-center text-electric-blue font-bold text-sm border border-electric-blue/30 shrink-0">1</div>
                                 <div>
-                                    <h4 className="text-gray-200 font-bold text-lg mb-1">Pattern Identification</h4>
+                                    <h4 className="text-gray-200 font-bold text-lg mb-1">Root Cause Analysis</h4>
                                     <p className="text-gray-400 text-sm leading-relaxed">
-                                        Gemini analyzed 450 recent log entries. A consistent <code>ConnectionRefusedError</code> pattern was detected originating from <code>payment-service</code> pods attempting to reach <code>user-db-shard-04</code>.
+                                        {group.analysis?.cause || "No automated cause identified."}
                                     </p>
                                 </div>
                             </div>
@@ -85,9 +86,9 @@ const InvestigationCanvas = ({ group, incidents }) => {
                             <div className="flex items-start gap-4">
                                 <div className="w-8 h-8 rounded-full bg-electric-blue/20 flex items-center justify-center text-electric-blue font-bold text-sm border border-electric-blue/30 shrink-0">2</div>
                                 <div>
-                                    <h4 className="text-gray-200 font-bold text-lg mb-1">Correlation Analysis</h4>
+                                    <h4 className="text-gray-200 font-bold text-lg mb-1">Correlation & Insight</h4>
                                     <p className="text-gray-400 text-sm leading-relaxed">
-                                        This spike looks strongly correlated with the <span className="text-electric-blue font-mono">v4.2.0-rc3</span> deployment event that occurred 15 minutes prior to the first error. No similar errors were seen in the previous 24 hours.
+                                        {group.analysis?.correlation_insight || "No specific correlation insights detected across traces."}
                                     </p>
                                 </div>
                             </div>
@@ -95,25 +96,28 @@ const InvestigationCanvas = ({ group, incidents }) => {
                             <div className="flex items-start gap-4">
                                 <div className="w-8 h-8 rounded-full bg-electric-blue/20 flex items-center justify-center text-electric-blue font-bold text-sm border border-electric-blue/30 shrink-0">3</div>
                                 <div>
-                                    <h4 className="text-gray-200 font-bold text-lg mb-1">Hypothesis Generation</h4>
+                                    <h4 className="text-gray-200 font-bold text-lg mb-1">AI Hypothesis</h4>
                                     <div className="bg-black/30 border border-white/5 rounded-lg p-4 mt-2">
                                         <div className="flex justify-between items-center mb-2">
-                                            <span className="text-sm font-bold text-gray-300">Primary Hypothesis</span>
-                                            <span className="text-xs bg-success-green/20 text-success-green px-2 py-0.5 rounded font-mono">95% Confidence</span>
+                                            <span className="text-sm font-bold text-gray-300">Analysis Summary</span>
+                                            <span className="text-xs bg-success-green/20 text-success-green px-2 py-0.5 rounded font-mono">
+                                                {((group.root_cause?.confidence || 0) * 100).toFixed(0)}% Confidence
+                                            </span>
                                         </div>
                                         <p className="text-gray-400 text-sm">
-                                            Database connection pool exhaustion due to missing connection closure in the new <code>AsyncUserFetcher</code> class introduced in the recent deploy.
+                                            {group.analysis?.redacted_summary || "Gemini concluded its scan focusing on security and priority parameters."}
                                         </p>
                                     </div>
-                                    <div className="bg-black/20 border border-white/5 rounded-lg p-4 mt-2 opacity-60 hover:opacity-100 transition-opacity">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="text-sm font-bold text-gray-400">Alternative Hypothesis</span>
-                                            <span className="text-xs bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded font-mono">15% Confidence</span>
+                                    {group.analysis?.security_alert && (
+                                        <div className="bg-alert-red/10 border border-alert-red/20 rounded-lg p-4 mt-2">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-alert-red">⚠️ SECURITY ALERT DETECTED</span>
+                                            </div>
+                                            <p className="text-gray-400 text-sm italic underline">
+                                                Potential security vulnerability detected in this trace pattern.
+                                            </p>
                                         </div>
-                                        <p className="text-gray-500 text-sm">
-                                            Network partition affecting the availability zone where the DB shard resides.
-                                        </p>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -121,21 +125,23 @@ const InvestigationCanvas = ({ group, incidents }) => {
 
                     {selectedTab === 'evidence' && (
                         <div className="h-full animate-fade-in">
-                            <SecureLogViewer />
+                            <SecureLogViewer logs={group.logs || []} />
                         </div>
                     )}
 
                     {selectedTab === 'playbook' && (
                         <div className="space-y-4 animate-fade-in text-gray-300">
-                            <p className="italic text-gray-500">Playbook steps retrieved from knowledge base...</p>
-                            {/* Mock Playbook Steps Content */}
-                            <div className="p-4 bg-black/20 rounded border border-white/5 font-mono text-sm">
-                                1. Check active connection count on DB shard.
-                                <br />
-                                2. If count &gt; 90%, restart service pods to flush connections.
-                                <br />
-                                3. Rollback to previous stable version if issue persists.
+                            <h4 className="text-gray-100 font-bold text-lg mb-1">AI Recommended Remedy</h4>
+                            <div className="p-5 bg-success-green/5 rounded-xl border border-success-green/20 font-mono text-sm text-success-green leading-relaxed">
+                                <div className="flex gap-2 mb-2">
+                                    <span className="opacity-50 tracking-tighter">EXECUTE &gt;</span>
+                                    <span className="font-bold underline">AUTO-HEAL COMMAND</span>
+                                </div>
+                                {group.analysis?.action || "No specific playbook actions generated for this anomaly."}
                             </div>
+                            <p className="text-[10px] text-gray-500 italic mt-4 uppercase tracking-widest">
+                                Source: Gemini SRE Intelligence Layer
+                            </p>
                         </div>
                     )}
 

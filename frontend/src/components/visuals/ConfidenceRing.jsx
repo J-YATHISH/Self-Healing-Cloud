@@ -1,9 +1,12 @@
 import React from 'react';
 
 const ConfidenceRing = ({ score = 0, size = 60, strokeWidth = 4 }) => {
+    // Normalize score: if it's 0-1 (like 0.98), convert to 0-100
+    const normalizedScore = (score > 0 && score <= 1) ? Math.round(score * 100) : Math.round(score);
+
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
-    const offset = circumference - (score / 100) * circumference;
+    const offset = circumference - (normalizedScore / 100) * circumference;
 
     let color = 'text-alert-red';
     if (score >= 80) color = 'text-success-green';
@@ -38,7 +41,7 @@ const ConfidenceRing = ({ score = 0, size = 60, strokeWidth = 4 }) => {
             </svg>
             {/* Score Text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className={`text-sm font-bold ${color}`}>{score}%</span>
+                <span className={`text-sm font-bold ${color}`}>{normalizedScore}%</span>
                 <span className="text-[8px] text-gray-500 uppercase tracking-tighter">CONF</span>
             </div>
         </div>
