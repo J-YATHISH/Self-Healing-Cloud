@@ -71,6 +71,3 @@ Unlike traditional logging tools (Datadog, Splunk, Cloud Logging) that focus on 
 - **Communication**: Asynchronous Email (aiosmtplib).
 
 ---
-
-## 🤝 Contributing
-Contributions are welcome! Please ensure you have configured your development environment with the necessary GCP permissions.
