@@ -1,7 +1,7 @@
 # Cloud RCA Assistant: AI-Driven SRE Mission Control
 
 > [!NOTE]
-> **Live Demo**: [Insert Deployed Link Here]
+> [**Live Demo**](https://cloud-rca-assistant.vercel.app)
 
 ## 🌪️ The Problem
 In modern cloud native environments, SREs (Site Reliability Engineers) are overwhelmed by "log noise." Identifying the root cause of an incident typically requires manually searching through thousands of multi-service traces, correlating disjointed logs, and guessing the remediation steps. This leads to high **MTTR (Mean Time To Recovery)** and system downtime.
