@@ -100,14 +100,14 @@ const AuthPage = () => {
                                         name="projectId"
                                         type="text"
                                         required
-                                        placeholder="my-gcp-project-id"
+                                        placeholder="project-e2bcb697-e160-439a-a3c"
                                         className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                         value={formData.projectId}
                                         onChange={handleChange}
                                     />
                                 </div>
                                 <p className="mt-2 text-xs text-gray-500">
-                                    Enter your GCP Project ID to connect to Cloud Logging.
+                                    Recommended: <code className="bg-gray-100 px-1 rounded">project-e2bcb697-e160-439a-a3c</code>
                                 </p>
                             </div>
 
@@ -166,6 +166,33 @@ const AuthPage = () => {
                                         Connect GCP Account
                                     </>
                                 )}
+                            </button>
+
+                            <div className="relative">
+                                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                    <div className="w-full border-t border-gray-300"></div>
+                                </div>
+                                <div className="relative flex justify-center text-sm">
+                                    <span className="px-2 bg-white text-gray-500 font-mono">INTERNAL PREVIEW</span>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={async () => {
+                                    setIsLoading(true);
+                                    try {
+                                        const res = await authAPI.demoLogin();
+                                        login(res.data.token, res.data.user);
+                                        navigate('/dashboard');
+                                    } catch (err) {
+                                        setError("Test account not configured in backend.");
+                                    } finally {
+                                        setIsLoading(false);
+                                    }
+                                }}
+                                className="w-full flex justify-center py-2 px-4 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            >
+                                Test Account with Real GCP Deployment
                             </button>
 
                             <button

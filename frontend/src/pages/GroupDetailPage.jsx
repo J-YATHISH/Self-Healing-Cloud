@@ -70,7 +70,17 @@ const GroupDetailPage = () => {
         <div className="min-h-screen bg-obsidian pb-32 pt-[140px]"> {/* pb-32 for sticky footer, pt-[140px] for fixed header */}
 
             {/* Zone 1: Situation Awareness */}
-            <IncidentCommandHeader group={group} />
+            <div className="max-w-7xl mx-auto px-6 mb-8">
+                <IncidentCommandHeader group={group} />
+                {group?.category && (
+                    <div className="mt-4 flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Category:</span>
+                        <span className="bg-purple-900/30 text-purple-400 text-xs font-bold px-3 py-1 rounded border border-purple-500/20 uppercase tracking-wider">
+                            {group.category}
+                        </span>
+                    </div>
+                )}
+            </div>
 
             {/* Zone 2: Investigation Canvas */}
             <div className="max-w-7xl mx-auto px-6 py-8">

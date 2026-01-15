@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { ERROR_CATEGORIES } from '../../constants/errorCategories';
 
 const RuleEditor = ({ rule, onSave, onCancel, isSaving }) => {
     const [formData, setFormData] = useState({
         name: '',
-        category: 'Database',
+        category: ERROR_CATEGORIES[0],
         threshold: 5,
         window_minutes: 15,
         severity: 'HIGH',
@@ -14,7 +15,7 @@ const RuleEditor = ({ rule, onSave, onCancel, isSaving }) => {
         if (rule) {
             setFormData({
                 name: rule.name || '',
-                category: rule.category || 'Database',
+                category: rule.category || ERROR_CATEGORIES[0],
                 threshold: rule.threshold || 5,
                 window_minutes: rule.window_minutes || 15,
                 severity: rule.severity || 'HIGH',
@@ -59,21 +60,19 @@ const RuleEditor = ({ rule, onSave, onCancel, isSaving }) => {
             </div>
 
             <div>
-                <label className={labelClasses}>Trigger Category</label>
+                <label className={labelClasses}>Applies to Category</label>
                 <select
                     name="category"
+                    required
                     className={inputClasses}
                     value={formData.category}
                     onChange={handleChange}
                 >
-                    <option value="Database">Database & Storage</option>
-                    <option value="Network">Network & CDN</option>
-                    <option value="Security">Security & IAM</option>
-                    <option value="Compute">Compute & Clusters</option>
-                    <option value="Application">Application Logic</option>
-                    <option value="API">API Gateway</option>
+                    {ERROR_CATEGORIES.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                    ))}
                 </select>
-                <p className="mt-1.5 text-[10px] text-gray-500 italic">Emails will trigger when AI identifies logs matching this category.</p>
+                <p className="mt-1.5 text-[10px] text-gray-500 italic">Rules will trigger based on logs identified under this category.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -112,8 +111,8 @@ const RuleEditor = ({ rule, onSave, onCancel, isSaving }) => {
                             type="button"
                             onClick={() => setFormData({ ...formData, severity: s })}
                             className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${formData.severity === s
-                                    ? 'bg-electric-blue/20 border-electric-blue text-electric-blue'
-                                    : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/30'
+                                ? 'bg-electric-blue/20 border-electric-blue text-electric-blue'
+                                : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/30'
                                 }`}
                         >
                             {s}

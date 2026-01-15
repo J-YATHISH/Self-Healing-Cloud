@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { analyticsAPI, groupsAPI, analysisAPI } from '../services/api';
+import { ERROR_CATEGORIES } from '../constants/errorCategories';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
 import SystemIntelligencePanel from '../components/cards/SystemIntelligencePanel';
@@ -19,6 +20,7 @@ const DashboardPage = () => {
         impactedServices: 0
     });
     const [recentGroups, setRecentGroups] = useState([]);
+    const [categoryFilter, setCategoryFilter] = useState('All');
     const [loadingData, setLoadingData] = useState(true);
     const [selectedGroup, setSelectedGroup] = useState(null); // For Deep Dive
 
@@ -38,7 +40,11 @@ const DashboardPage = () => {
 
             const [statsRes, groupsRes] = await Promise.allSettled([
                 analyticsAPI.summary(),
-                groupsAPI.list({ status: 'active', limit: 10 }) // Fetch more for canvas
+                groupsAPI.list({
+                    status: 'active',
+                    limit: 10,
+                    ...(categoryFilter !== 'All' && { category: categoryFilter })
+                })
             ]);
 
             // Handle Stats
@@ -62,10 +68,10 @@ const DashboardPage = () => {
         }
     };
 
-    // Initial load
+    // Initial load and filter changes
     useEffect(() => {
         fetchDashboardData();
-    }, []);
+    }, [categoryFilter]);
 
     // Handle Analysis Trigger
     const handleStartAnalysis = async (e) => {
@@ -110,8 +116,23 @@ const DashboardPage = () => {
                     <h1 className="text-3xl font-bold text-gray-100 tracking-tight">Mission Control</h1>
                     <p className="text-sm text-gray-500 font-mono mt-1">System Status: <span className="text-success-green">NOMINAL</span></p>
                 </div>
-                <div className="bg-black/20 px-3 py-1 rounded text-xs font-mono text-gray-500 border border-white/5">
-                    REGION: US-EAST-1
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs font-mono text-gray-500 uppercase">Category:</label>
+                        <select
+                            value={categoryFilter}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            className="bg-black/40 border border-white/10 rounded px-2 py-1 text-xs font-mono text-gray-300 focus:border-electric-blue outline-none"
+                        >
+                            <option value="All">All</option>
+                            {ERROR_CATEGORIES.map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="bg-black/20 px-3 py-1 rounded text-xs font-mono text-gray-500 border border-white/5">
+                        REGION: US-EAST-1
+                    </div>
                 </div>
             </div>
 

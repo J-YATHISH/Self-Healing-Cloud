@@ -12,6 +12,7 @@ export const useErrorGroups = () => {
         setLoading(true);
         setError(null);
         try {
+            // Backend filtering: GET /api/groups?category=<CATEGORY>
             const response = await groupsAPI.list(params);
             setGroups(response.data);
             return response.data;

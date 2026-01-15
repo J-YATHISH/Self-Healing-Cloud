@@ -20,32 +20,48 @@ def get_db():
     return db
 
 @router.get("")
-async def list_incidents(group_id: Optional[str] = None, page: int = 1, limit: int = 10):
-    """List all incidents, optionally filtered by group, with pagination and sorting"""
+async def list_incidents(
+    group_id: Optional[str] = None, 
+    category: Optional[str] = None,
+    page: int = 1, 
+    limit: int = 10
+):
+    """List all incidents, optionally filtered by group or category, with pagination"""
     conn = get_db()
     try:
         from google.cloud.firestore import Query
+        # Only order by timestamp to avoid requiring composite indexes
         query = conn.collection("incidents").order_by("timestamp", direction=Query.DESCENDING)
         
-        if group_id:
-            query = query.where(filter=FieldFilter("trace_id", "==", group_id))
-            
-        # Simple pagination using offset (reasonable for small/medium datasets)
-        offset = (page - 1) * limit
-        docs = await query.offset(offset).limit(limit).get()
+        # Fetch larger batch for in-memory filtering
+        docs = await query.limit(300).get()
         
-        res = []
+        all_incidents = []
         for doc in docs:
             data = doc.to_dict()
-            res.append({
+            
+            # Apply In-Memory Filters
+            if group_id and data.get("trace_id") != group_id:
+                continue
+                
+            if category and category != 'ALL' and data.get("category") != category:
+                continue
+            
+            all_incidents.append({
                 "id": doc.id,
                 "trace_id": data.get("trace_id"),
                 "service_name": data.get("service_name"),
                 "created_at": data.get("timestamp"),
+                "timestamp": data.get("timestamp"), # Sync with frontend fix
                 "priority": data.get("priority"),
-                "status": "OPEN"
+                "status": data.get("status", "OPEN"),
+                "category": data.get("category")
             })
-        return res
+            
+        # Pagination
+        start = (page - 1) * limit
+        end = start + limit
+        return all_incidents[start:end]
     except Exception as e:
         return []
 

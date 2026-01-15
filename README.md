@@ -22,6 +22,19 @@ In modern cloud native environments, SREs (Site Reliability Engineers) are overw
 
 ---
 
+## 💎 Why Self-Healing Cloud? (USPs)
+
+Unlike traditional logging tools (Datadog, Splunk, Cloud Logging) that focus on *storage* and *search*, Self-Healing Cloud focuses on **intent** and **resolution**.
+
+-   **Trace-Centric Intelligence**: We don't just show logs; we group disparate logs from across your entire microservice stack into a single `trace_id` story. You see the *life* of a request, not just its death.
+-   **Contextual Reasoning over Raw Data**: Most tools tell you *what* failed. Our Gemini-powered engine tells you *why* it failed and *how* to fix it, providing concrete remediation steps in seconds.
+-   **Multi-Service Correlation**: Automatically detects when a failure in a database-service is the root cause of a timeout in the payment-service, linking them into a single Incident Group.
+-   **Neural Prioritization**: High-volume errors are common. We use AI Confidence scores to separate "Background Noise" from "Critical Systemic Failures," so you focus on what actually matters.
+-   **Zero-Index Zero-Config Persistence**: Built with custom in-memory filtering for Firestore, allowing the application to work out-of-the-box on any GCP project without the 24-hour wait for manual index creation.
+-   **Evaluation Ready**: Features a **"Test Account with Real GCP Deployment"** mode, allowing stakeholders to witness the system's power on a live environment without OAuth onboarding friction.
+
+---
+
 ## 🛠️ Local Setup
 
 ### Prerequisites

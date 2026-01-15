@@ -9,6 +9,7 @@ const IncidentCanvasCard = ({ group }) => {
     const {
         id,
         name,
+        category,
         count = 1,
         root_cause = {},
         status = 'OPEN',
@@ -32,6 +33,11 @@ const IncidentCanvasCard = ({ group }) => {
                         <span className="bg-electric-blue/10 text-electric-blue text-xs font-mono px-2 py-0.5 rounded border border-electric-blue/20">
                             {services[0]}
                         </span>
+                        {category && (
+                            <span className="bg-purple-900/30 text-purple-400 text-[10px] font-bold px-2 py-0.5 rounded border border-purple-500/20 uppercase tracking-wider">
+                                {category}
+                            </span>
+                        )}
                         <span className="text-gray-500 text-xs font-mono">{route}</span>
                         <span className="text-gray-600 text-xs">• {new Date(last_seen).toLocaleTimeString()}</span>
                     </div>
@@ -67,19 +73,6 @@ const IncidentCanvasCard = ({ group }) => {
                         >
                             View Reasoning
                         </Link>
-
-                        <button
-                            disabled={!canRollback}
-                            className={`text-xs py-1.5 px-3 rounded text-center font-medium border transition-all
-                                ${canRollback
-                                    ? 'bg-electric-blue/10 text-electric-blue border-electric-blue/20 hover:bg-electric-blue/20 cursor-pointer'
-                                    : 'bg-transparent text-gray-600 border-gray-800 cursor-not-allowed opacity-50'
-                                }
-                            `}
-                            title={canRollback ? "Auto-revert caused by recent deployment" : "Confidence too low for auto-action"}
-                        >
-                            Approve Rollback
-                        </button>
                     </div>
                 </div>
             </div>
@@ -98,19 +91,21 @@ const IncidentCanvasCard = ({ group }) => {
 
                 {expanded && (
                     <div className="mt-2 bg-black/40 rounded p-3 font-mono text-xs text-gray-400 overflow-x-auto border border-white/5 space-y-2">
-                        {(group.logs || []).slice(0, 3).map((log, lidx) => (
-                            <div key={lidx} className="border-b border-white/5 pb-2 last:border-0">
-                                <div className="flex gap-2 mb-1">
-                                    <span className={log.severity === 'ERROR' ? 'text-alert-red' : 'text-gray-500'}>
-                                        [{log.severity || 'INFO'}]
-                                    </span>
-                                    <span className="text-gray-300">{log.message || log.msg}</span>
+                        {(group.logs || [])
+                            .filter(log => (log.severity || log.level || '').toUpperCase() !== 'INFO')
+                            .slice(0, 3).map((log, lidx) => (
+                                <div key={lidx} className="border-b border-white/5 pb-2 last:border-0">
+                                    <div className="flex gap-2 mb-1">
+                                        <span className={log.severity === 'ERROR' ? 'text-alert-red' : 'text-gray-500'}>
+                                            [{log.severity || 'INFO'}]
+                                        </span>
+                                        <span className="text-gray-300">{log.message || log.msg}</span>
+                                    </div>
+                                    <div className="pl-4 text-[10px] text-gray-600 italic">
+                                        {log.timestamp} • {log.service}
+                                    </div>
                                 </div>
-                                <div className="pl-4 text-[10px] text-gray-600 italic">
-                                    {log.timestamp} • {log.service}
-                                </div>
-                            </div>
-                        ))}
+                            ))}
                         {(!group.logs || group.logs.length === 0) && (
                             <div className="text-gray-600 italic">No sample logs available for this trace.</div>
                         )}

@@ -37,7 +37,7 @@ const IncidentTimeline = ({ incidents = [] }) => {
                                         </p>
                                     </div>
                                     <div className="text-right text-sm whitespace-nowrap text-gray-500">
-                                        <time dateTime={incident.created_at}>{new Date(incident.created_at).toLocaleString()}</time>
+                                        <time dateTime={incident.timestamp}>{new Date(incident.timestamp).toLocaleString()}</time>
                                     </div>
                                 </div>
                             </div>

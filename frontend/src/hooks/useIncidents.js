@@ -11,6 +11,7 @@ export const useIncidents = () => {
         setLoading(true);
         setError(null);
         try {
+            // Backend filtering: GET /api/incidents?category=<CATEGORY>
             const response = await incidentsAPI.list(params);
             setIncidents(response.data);
             return response.data;

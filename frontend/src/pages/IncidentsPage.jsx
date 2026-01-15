@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { groupsAPI } from '../services/api';
+import { ERROR_CATEGORIES } from '../constants/errorCategories';
 import IncidentCanvasCard from '../components/cards/IncidentCanvasCard';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
@@ -15,7 +16,8 @@ const IncidentsPage = () => {
     const [filters, setFilters] = useState({
         search: '',
         severity: 'ALL',
-        status: 'ALL'
+        status: 'ALL',
+        category: 'ALL'
     });
 
     // Mock Pagination Config
@@ -34,6 +36,7 @@ const IncidentsPage = () => {
                     ...(filters.search && { search: filters.search }),
                     ...(filters.severity !== 'ALL' && { severity: filters.severity }),
                     ...(filters.status !== 'ALL' && { status: filters.status }),
+                    ...(filters.category !== 'ALL' && { category: filters.category }),
                 };
 
                 const response = await groupsAPI.list(params);
@@ -78,7 +81,7 @@ const IncidentsPage = () => {
             </div>
 
             {/* Filters */}
-            <div className="bg-white/5 border border-white/10 p-4 rounded-xl shadow-lg backdrop-blur grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="bg-white/5 border border-white/10 p-4 rounded-xl shadow-lg backdrop-blur grid grid-cols-1 sm:grid-cols-5 gap-4">
                 <div className="sm:col-span-2">
                     <label htmlFor="search" className="sr-only">Search</label>
                     <div className="relative">
@@ -111,7 +114,6 @@ const IncidentsPage = () => {
                         <option value="HIGH">High Priority</option>
                     </select>
                 </div>
-
                 <div>
                     <select
                         name="status"
@@ -124,6 +126,20 @@ const IncidentsPage = () => {
                         <option value="RESOLVED">Resolved</option>
                     </select>
                 </div>
+
+                <div>
+                    <select
+                        name="category"
+                        value={filters.category}
+                        onChange={handleFilterChange}
+                        className="bg-black/20 block w-full pl-3 pr-10 py-2.5 text-base border-white/10 text-gray-200 focus:outline-none focus:ring-electric-blue focus:border-electric-blue sm:text-sm rounded-lg"
+                    >
+                        <option value="ALL">Category: All</option>
+                        {ERROR_CATEGORIES.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             {/* Canvas Header */}
@@ -133,22 +149,24 @@ const IncidentsPage = () => {
             </div>
 
             {/* Content Canvas */}
-            {loading ? (
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <LoadingSpinner size="lg" />
-                </div>
-            ) : groups.length === 0 ? (
-                <EmptyState
-                    title="No active batches found"
-                    description="Your system is running smoothly. No error patterns detected fitting current filters."
-                />
-            ) : (
-                <div className="grid grid-cols-1 gap-4">
-                    {groups.map(group => (
-                        <IncidentCanvasCard key={group.id} group={group} />
-                    ))}
-                </div>
-            )}
+            {
+                loading ? (
+                    <div className="flex items-center justify-center min-h-[400px]">
+                        <LoadingSpinner size="lg" />
+                    </div>
+                ) : groups.length === 0 ? (
+                    <EmptyState
+                        title="No active batches found"
+                        description="Your system is running smoothly. No error patterns detected fitting current filters."
+                    />
+                ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                        {groups.map(group => (
+                            <IncidentCanvasCard key={group.id} group={group} />
+                        ))}
+                    </div>
+                )
+            }
 
             {/* Pagination / Load More */}
             <div className="flex justify-center mt-8">

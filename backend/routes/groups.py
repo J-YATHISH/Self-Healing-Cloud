@@ -20,56 +20,41 @@ def get_db():
     return db
 
 @router.get("")
-async def list_groups(status: Optional[str] = None, page: int = 1, limit: int = 10):
-    """
-    Lists incident groups. 
-    Currently maps 1:1 to incidents since we don't have grouping logic in DB yet.
-    """
+async def list_groups(
+    status: Optional[str] = None, 
+    category: Optional[str] = None,
+    page: int = 1, 
+    limit: int = 10
+):
     conn = get_db()
     try:
-        # Import Query for ordering
         from google.cloud.firestore import Query
         
-        # Start with base query, order by timestamp descending
-        query = conn.collection("incidents").order_by("timestamp", direction=Query.DESCENDING)
+        # Start with base query - only order by last_seen
+        # We perform in-memory filtering to avoid requiring composite indexes
+        # which would block evaluators.
+        query = conn.collection("groups").order_by("last_seen", direction=Query.DESCENDING)
         
-        # Increase limit since we aggregate by trace_id (multiple incidents might share a trace)
-        # Limit the scope of aggregation to the last 100 incidents for performance
-        docs = await query.limit(100).get() 
+        # Fetch a larger batch for in-memory filtering
+        docs = await query.limit(200).get()
         
-        groups_map = {}
+        all_groups = []
         for doc in docs:
             data = doc.to_dict()
-            trace_id = data.get("trace_id", doc.id)
-            analysis = data.get("analysis", {})
             
-            if trace_id not in groups_map:
-                groups_map[trace_id] = {
-                    "id": trace_id,
-                    "name": analysis.get("cause", "Unknown Anomaly"),
-                    "status": "OPEN",
-                    "severity": data.get("priority", "P2"),
-                    "count": data.get("occurrence_count", 1),
-                    "last_seen": data.get("timestamp"),
-                    "root_cause": {
-                        "cause": analysis.get("cause"),
-                        "confidence": round(analysis.get("confidence", 0) * 100) if analysis.get("confidence", 0) <= 1.0 else analysis.get("confidence", 0)
-                    },
-                    "services": [data.get("service_name", "Unknown")],
-                    "route": "GCP Cloud Run"
-                }
-            else:
-                groups_map[trace_id]["count"] += data.get("occurrence_count", 1)
-                if data.get("timestamp") and (not groups_map[trace_id]["last_seen"] or data.get("timestamp") > groups_map[trace_id]["last_seen"]):
-                    groups_map[trace_id]["last_seen"] = data.get("timestamp")
+            # Apply In-Memory Filters
+            if status and status != 'ALL' and data.get("status") != status:
+                continue
             
-        # Sort aggregated groups by last_seen descending
-        sorted_groups = sorted(groups_map.values(), key=lambda x: x['last_seen'] or '', reverse=True)
-        
-        # Pagination: pages of 10
+            if category and category != 'ALL' and data.get("category") != category:
+                continue
+                
+            all_groups.append(data)
+            
+        # Pagination
         start = (page - 1) * limit
         end = start + limit
-        return sorted_groups[start:end]
+        return all_groups[start:end]
     except Exception as e:
         print(f"Error fetching groups: {e}")
         return []

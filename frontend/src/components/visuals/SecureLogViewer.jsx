@@ -18,8 +18,8 @@ const SecureLogViewer = ({ logs = [] }) => {
         }
     };
 
-    // Use logs from props
-    const displayLogs = logs;
+    // Use logs from props, filtering out INFO logs
+    const displayLogs = logs.filter(log => (log.severity || log.level || '').toUpperCase() !== 'INFO');
 
     return (
         <div className="bg-black/40 rounded-lg border border-white/10 font-mono text-xs overflow-hidden relative">

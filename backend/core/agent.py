@@ -73,7 +73,27 @@ async def analyze_logs_async(log_data):
             response = await client.post(API_URL, json=payload, timeout=30.0)
             if response.status_code == 200:
                 res_json = response.json()
-                return json.loads(res_json['candidates'][0]['content']['parts'][0]['text'])
+                
+                # Robust parsing for safety blocks or empty responses
+                candidates = res_json.get('candidates', [])
+                if not candidates:
+                    print(f"⚠️ Gemini: No candidates returned. Blocked? {res_json.get('promptFeedback')}")
+                    return None
+                    
+                content = candidates[0].get('content', {})
+                parts = content.get('parts', [])
+                if not parts:
+                    print(f"⚠️ Gemini: Candidate exists but no parts found. Blocked? {candidates[0].get('finishReason')}")
+                    return None
+                
+                # Extract text
+                text = parts[0].get('text', '')
+                if not text:
+                    return None
+                
+                # Handle possible markdown blocks in response
+                text = text.replace('```json', '').replace('```', '').strip()
+                return json.loads(text)
         return None
     except Exception as e:
         print(f"❌ Gemini Error: {e}")
@@ -89,7 +109,8 @@ async def process_trace_async(trace_id, logs):
             try:
                 # Store first 20 logs as context for the Investigation Canvas
                 log_context = logs[:20]
-                service_name = logs[0].get('service', 'unknown') if logs else 'unknown'
+                service_names = list(set(log.get('service', 'unknown') for log in logs))
+                primary_service = service_names[0] if service_names else 'unknown'
                 
                 # Normalize confidence to 0-100 range
                 confidence = analysis.get('confidence', 0)
@@ -97,19 +118,54 @@ async def process_trace_async(trace_id, logs):
                     confidence = round(confidence * 100)
                 analysis['confidence'] = confidence
 
-                await db.collection("incidents").add({
+                # 1. Save Incident
+                incident_data = {
                     "trace_id": trace_id,
-                    "service_name": service_name,
+                    "service_name": primary_service,
                     "timestamp": datetime.now().isoformat(),
                     "occurrence_count": len(logs),
+                    "category": analysis.get('category', 'UNKNOWN_SYSTEM_ERROR'),
                     "security_alert": analysis.get('security_alert', False),
                     "redacted_text": analysis.get('redacted_summary'),
                     "priority": analysis.get('priority', 'P2'),
                     "correlation": analysis.get('correlation_insight', 'N/A'),
                     "analysis": analysis,
                     "logs": log_context,
-                    "status": "OPEN" # Explicitly set for aggregation
-                })
+                    "status": "OPEN"
+                }
+                await db.collection("incidents").add(incident_data)
+
+                # 2. Upsert Group (Persistent Aggregation)
+                group_ref = db.collection("groups").document(trace_id)
+                group_doc = await group_ref.get()
+
+                if group_doc.exists:
+                    # Update existing group
+                    current_group = group_doc.to_dict()
+                    await group_ref.update({
+                        "count": current_group.get("count", 0) + len(logs),
+                        "last_seen": incident_data["timestamp"],
+                        "services": list(set(current_group.get("services", []) + service_names))
+                    })
+                else:
+                    # Create new group
+                    await group_ref.set({
+                        "id": trace_id,
+                        "name": analysis.get("cause", "Unknown Anomaly"),
+                        "category": incident_data["category"],
+                        "status": "OPEN",
+                        "severity": incident_data["priority"],
+                        "count": len(logs),
+                        "first_seen": incident_data["timestamp"],
+                        "last_seen": incident_data["timestamp"],
+                        "services": service_names,
+                        "root_cause": {
+                            "cause": analysis.get("cause"),
+                            "confidence": confidence
+                        },
+                        "route": "GCP Cloud Run"
+                    })
+
             except Exception as e: print(f"❌ Firebase Error: {e}")
         return (trace_id, logs, analysis)
     return (trace_id, logs, None)
@@ -222,7 +278,12 @@ async def chat_with_ai_async(message, user_id="default_user"):
             response = await client.post(API_URL, json=payload, timeout=20.0)
             if response.status_code == 200:
                 res_json = response.json()
-                return {"reply": res_json['candidates'][0]['content']['parts'][0]['text']}
+                candidates = res_json.get('candidates', [])
+                if candidates:
+                    content = candidates[0].get('content', {})
+                    parts = content.get('parts', [])
+                    if parts:
+                        return {"reply": parts[0].get('text', "I'm unable to provide a response right now.")}
         return {"reply": "I'm having trouble connecting to my brain. Please try again."}
     except Exception as e:
         print(f"❌ Chat Gemini Error: {e}")

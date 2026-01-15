@@ -40,11 +40,44 @@ class AuthRequest(BaseModel):
     username: str
     password: str
 
-# Mock endpoints (keep for backward compatibility)
 @router.post("/login")
 async def login(creds: AuthRequest):
     """Mock login endpoint"""
     return {"token": "mock-jwt-token-xyz", "user": {"id": 1, "name": "SRE User"}}
+
+@router.post("/demo/login")
+async def demo_login():
+    """Bypass logic for 'Test Account with Real GCP Deployment'"""
+    if os.getenv("DEMO_MODE") != "true":
+        raise HTTPException(status_code=403, detail="Demo mode is disabled.")
+    
+    # Real account details provided by user
+    user_name = "Jaiganesh S"
+    user_email = "s.jaiganesh1607@gmail.com"
+    user_id = "101164602584260907344" # Actual User ID in Firestore
+    project_id = "project-e2bcb697-e160-439a-a3c"
+    
+    user_data = {
+        'user_id': user_id,
+        'email': user_email,
+        'name': user_name,
+        'projectId': project_id
+    }
+    
+    # Generate session token
+    import json
+    import base64
+    session_token = base64.b64encode(json.dumps(user_data).encode()).decode()
+    
+    return {
+        "token": session_token,
+        "user": {
+            "id": user_id,
+            "name": user_name,
+            "email": user_email,
+            "projectId": project_id
+        }
+    }
 
 @router.get("/status")
 async def auth_status():

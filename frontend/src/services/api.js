@@ -48,10 +48,11 @@ api.interceptors.response.use(
 
 // Auth API Services
 export const authAPI = {
-    googleAuthorize: (projectId) => api.get('/auth/google/authorize', { params: { project_id: projectId } }),
+    googleAuthorize: (projectId) => api.get(`/auth/google/authorize?project_id=${projectId}`),
     googleStatus: () => api.get('/auth/google/status'),
-    setup: (config) => api.post('/auth/setup', config),
+    setup: () => api.post('/auth/setup'),
     login: (credentials) => api.post('/auth/login', credentials),
+    demoLogin: () => api.post('/auth/demo/login'),
     status: () => api.get('/auth/status'),
 };
 
