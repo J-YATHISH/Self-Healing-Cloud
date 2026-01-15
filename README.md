@@ -6,8 +6,8 @@
 ## 🌪️ The Problem
 In modern cloud native environments, SREs (Site Reliability Engineers) are overwhelmed by "log noise." Identifying the root cause of an incident typically requires manually searching through thousands of multi-service traces, correlating disjointed logs, and guessing the remediation steps. This leads to high **MTTR (Mean Time To Recovery)** and system downtime.
 
-## 🛡️ The Solution: Self-Healing Cloud
-**Self-Healing Cloud** is a Next-Gen SRE Command Center that transforms raw logs into actionable intelligence. By integrating **Gemini AI** directly into the GCP logging pipeline, it provides an autonomous diagnostic layer that identifies, explains, and suggests fixes for anomalies before they escalate.
+## 🛡️ The Solution: Cloud RCA(Root Cause Analysis)
+**Cloud RCA** is a Next-Gen SRE Command Center that transforms raw logs into actionable intelligence. By integrating **Gemini AI** directly into the GCP logging pipeline, it provides an autonomous diagnostic layer that identifies, explains, and suggests fixes for anomalies before they escalate.
 
 ---
 
@@ -22,7 +22,7 @@ In modern cloud native environments, SREs (Site Reliability Engineers) are overw
 
 ---
 
-## 💎 Why Self-Healing Cloud? (USPs)
+## 💎 Why Cloud RCA? (USPs)
 
 Unlike traditional logging tools (Datadog, Splunk, Cloud Logging) that focus on *storage* and *search*, Self-Healing Cloud focuses on **intent** and **resolution**.
 
